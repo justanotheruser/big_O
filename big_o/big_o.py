@@ -10,7 +10,7 @@ from big_o.logging import log
 
 def measure_execution_time(func, data_generator,
                            min_n=100, max_n=100000, n_measures=10,
-                           n_repeats=1, n_timings=1, verbose=False):
+                           number=1, repeat=1, verbose=False):
     """ Measure the execution time of a function for increasing N.
 
     Input:
@@ -29,10 +29,10 @@ def measure_execution_time(func, data_generator,
                                 at `n_measures` points between `min_n` and
                                 `max_n` (included)
 
-    n_repeats -- Number of times func is called to compute execution time
+    number -- Number of times func is called to compute execution time
                  (return the cumulative time of execution)
 
-    n_timings -- Number of times the timing measurement is repeated.
+    repeat -- Number of times the timing measurement is repeated.
                  The minimum time for all the measurements is kept.
 
     verbose -- If True, print measured time for each tested value of n as soon
@@ -54,16 +54,16 @@ def measure_execution_time(func, data_generator,
             self.data = data_generator(n)
 
         def __call__(self):
-            return func(self.data)
+            return func(next(self.data))
 
     # TODO: check that max_n is not larger than max int64
     ns = np.linspace(min_n, max_n, n_measures).astype('int64')
     execution_time = np.empty(n_measures)
     for i, n in enumerate(ns):
         timer = Timer(func_wrapper(n))
-        measurements = timer.repeat(n_timings, n_repeats)
+        measurements = timer.repeat(repeat, number)
         execution_time[i] = np.min(measurements)
-        log(f'n={n}: {execution_time[i]}', verbose=verbose)
+        log(f'{i+1}/{len(ns)} n={n}: {execution_time[i]}', verbose=verbose)
     return ns, execution_time
 
 
@@ -113,7 +113,7 @@ def infer_big_o_class(ns, time, classes=ALL_CLASSES, verbose=False):
 
 def big_o(func, data_generator,
           min_n=100, max_n=100000, n_measures=10,
-          n_repeats=1, n_timings=1, classes=ALL_CLASSES, verbose=False, return_raw_data=False):
+          number=1, repeat=1, classes=ALL_CLASSES, verbose=False, return_raw_data=False):
     """ Estimate time complexity class of a function from execution time.
 
     Input:
@@ -132,10 +132,10 @@ def big_o(func, data_generator,
                                 at `n_measures` points between `min_n` and
                                 `max_n` (included)
 
-    n_repeats -- Number of times func is called to compute execution time
+    number -- Number of times func is called to compute execution time
                  (return the cumulative time of execution)
 
-    n_timings -- Number of times the timing measurement is repeated.
+    repeat -- Number of times the timing measurement is repeated.
                  The minimum time for all the measurements is kept.
 
     classes -- The complexity classes to consider. This is a list of subclasses
@@ -163,8 +163,8 @@ def big_o(func, data_generator,
     """
 
     ns, time = measure_execution_time(func, data_generator,
-                                      min_n, max_n, n_measures, n_repeats,
-                                      n_timings, verbose)
+                                      min_n, max_n, n_measures, number,
+                                      repeat, verbose)
     best, fitted = infer_big_o_class(ns, time, classes, verbose=verbose)
 
     if return_raw_data:
