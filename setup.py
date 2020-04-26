@@ -15,5 +15,5 @@ setup(
     license='LICENSE.txt',
     long_description=long_description,
     packages=['big_o', 'big_o.test'],
-    install_requires=['numpy']
+    install_requires=['matplotlib', 'numpy']
 )
