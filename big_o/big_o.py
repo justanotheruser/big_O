@@ -5,11 +5,12 @@ from timeit import Timer
 import numpy as np
 
 from big_o.complexities import ALL_CLASSES
+from big_o.logging import log
 
 
 def measure_execution_time(func, data_generator,
                            min_n=100, max_n=100000, n_measures=10,
-                           n_repeats=1, n_timings=1):
+                           n_repeats=1, n_timings=1, verbose=False):
     """ Measure the execution time of a function for increasing N.
 
     Input:
@@ -33,6 +34,9 @@ def measure_execution_time(func, data_generator,
 
     n_timings -- Number of times the timing measurement is repeated.
                  The minimum time for all the measurements is kept.
+
+    verbose -- If True, print measured time for each tested value of n as soon
+               as it is measured
 
     Output:
     -------
@@ -59,6 +63,7 @@ def measure_execution_time(func, data_generator,
         timer = Timer(func_wrapper(n))
         measurements = timer.repeat(n_timings, n_repeats)
         execution_time[i] = np.min(measurements)
+        log(f'n={n}: {execution_time[i]}', verbose=verbose)
     return ns, execution_time
 
 
@@ -102,8 +107,7 @@ def infer_big_o_class(ns, time, classes=ALL_CLASSES, verbose=False):
         if residuals < best_residuals - 1e-6:
             best_residuals = residuals
             best_class = inst
-        if verbose:
-            print(inst, '(r={:f})'.format(residuals))
+        log(inst, '(r={:f})'.format(residuals), verbose=verbose)
     return best_class, fitted
 
 
@@ -138,8 +142,9 @@ def big_o(func, data_generator,
                of `big_o.complexities.ComplexityClass`.
                Default: all the classes in `big_o.complexities.ALL_CLASSES`
 
-    verbose -- If True, print parameters and residuals of the fit for each
-               complexity class
+    verbose -- If True, print 1) measured time for each tested value of n as soon
+               as it is measured; 2) print parameters and residuals of the fit for
+               each complexity class
 
     return_raw_data -- If True, the function returns the measure points and its 
                        corresponding execution times as part of the fitted dictionary
@@ -159,7 +164,7 @@ def big_o(func, data_generator,
 
     ns, time = measure_execution_time(func, data_generator,
                                       min_n, max_n, n_measures, n_repeats,
-                                      n_timings)
+                                      n_timings, verbose)
     best, fitted = infer_big_o_class(ns, time, classes, verbose=verbose)
 
     if return_raw_data:
